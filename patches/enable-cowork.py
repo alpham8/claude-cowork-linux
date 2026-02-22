@@ -53,17 +53,17 @@ def find_function_bounds(content, start):
     return None
 
 
+PATCH_MARKER = '/*cowork-patched*/'
+
+
 def patch_file(filepath):
     with open(filepath, 'r') as f:
         content = f.read()
 
-    # Check if already patched (any function returning just {status:"supported"})
-    if re.search(r'function \w+\(\)\{return\{status:"supported"\}\}', content):
-        # Verify it replaced a platform gate, not some other function
-        for _, name in KNOWN_PATTERNS:
-            if f'function {name}(){{return{{status:"supported"}}}}' in content:
-                print(f"Already patched: {filepath} ({name})")
-                return True
+    # Check if already patched via marker
+    if PATCH_MARKER in content:
+        print(f"Already patched: {filepath}")
+        return True
 
     # Try known exact patterns first
     func_name = None
@@ -90,7 +90,7 @@ def patch_file(filepath):
         print("  a function checking process.platform and returning {{status:\"unsupported\"}}.")
         return False
 
-    new_code = f'function {func_name}(){{return{{status:"supported"}}}}'
+    new_code = f'function {func_name}(){{return{{status:"supported"}}}}{PATCH_MARKER}'
     content = content.replace(func_full, new_code, 1)
 
     with open(filepath, 'w') as f:

@@ -215,18 +215,23 @@ get_dmg() {
 
     # Wait for download to finish (file size must stabilize)
     log_info "Waiting for download to complete..."
-    local prev_size=-1 curr_size=0 stab_elapsed=0 stab_timeout=300
+    local prev_size=-1 curr_size=0 stall_elapsed=0 stall_timeout=300
     while true; do
         curr_size=$(stat -c%s "$found" 2>/dev/null || echo 0)
         if [[ "$prev_size" -eq "$curr_size" && "$curr_size" -gt 0 \
               && ! -f "${found}.crdownload" ]]; then
             break
         fi
+        # Reset stall timer when file is still growing
+        if [[ "$curr_size" -gt "$prev_size" ]]; then
+            stall_elapsed=0
+        else
+            stall_elapsed=$((stall_elapsed + 3))
+        fi
         prev_size=$curr_size
         sleep 3
-        stab_elapsed=$((stab_elapsed + 3))
-        if [[ "$stab_elapsed" -ge "$stab_timeout" ]]; then
-            die "Download did not stabilize within 5 minutes. File: $found ($(format_size "$curr_size"))"
+        if [[ "$stall_elapsed" -ge "$stall_timeout" ]]; then
+            die "Download stalled for 5 minutes. File: $found ($(format_size "$curr_size"))"
         fi
     done
     log_success "Download complete: $(format_size "$curr_size")"

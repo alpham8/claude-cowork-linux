@@ -322,8 +322,8 @@ npm install electron
 Check that all 3 patches are present in `linux-app-extracted/.vite/build/index.js`:
 
 ```bash
-# 1. Platform support (wj function)
-grep -q 'if(process.platform==="linux")return{status:"supported"}' linux-app-extracted/.vite/build/index.js && echo "✓ Patch 1" || echo "✗ Patch 1 missing"
+# 1. Platform gate (cowork patch marker)
+grep -q 'cowork-patched' linux-app-extracted/.vite/build/index.js && echo "✓ Patch 1" || echo "✗ Patch 1 missing"
 
 # 2. IPC origin validation (Q7 function)
 grep -q 'process.platform==="linux"' linux-app-extracted/.vite/build/index.js && echo "✓ Patch 2" || echo "✗ Patch 2 missing"
